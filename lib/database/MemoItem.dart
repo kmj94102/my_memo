@@ -58,33 +58,34 @@ class MemoItemModify {
   mapper() {
     return MemoItem(
         id: id,
-      title: title,
-      contents: contents,
-      isSecret: isSecret,
-      isImportance: isImportance,
-      password: password,
-      timestamp: timestamp,
-      colorGroup: colorGroup
-    );
+        title: title,
+        contents: contents,
+        isSecret: isSecret,
+        isImportance: isImportance,
+        password: password,
+        timestamp: timestamp,
+        colorGroup: colorGroup);
   }
 }
 
-Future<List<MemoItem>> getDB() async {
+Future<List<MemoItem>> getMemoList() async {
   final db = await MemoProvider().database;
-  final List<Map<String, dynamic>> maps = await db!.query("MEMO");
+  final List<Map<String, dynamic>> maps = await db!.query("Memo");
   if (maps.isEmpty) return [];
-  List<MemoItem> list = List.generate(maps.length, (index) {
-    return MemoItem(
-      id: maps[index]["id"],
-      title: maps[index]["title"],
-      contents: maps[index]["contents"],
-      isSecret: maps[index]["isSecret"],
-      isImportance: maps[index]["isImportance"],
-      password: maps[index]["password"],
-      timestamp: maps[index]["timestamp"],
-      colorGroup: maps[index]["colorGroup"],
-    );
-  });
+  List<MemoItem> list = maps.isNotEmpty
+      ? maps
+          .map((item) => MemoItem(
+                id: item["id"],
+                title: item["title"],
+                contents: item["contents"],
+                isSecret: item["isSecret"] == 1,
+                isImportance: item["isImportance"] == 1,
+                password: item["password"],
+                timestamp: item["timestamp"],
+                colorGroup: item["colorGroup"],
+              ))
+          .toList()
+      : [];
   return list;
 }
 

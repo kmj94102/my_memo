@@ -1,46 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:my_memo/database/MemoItem.dart';
+import 'package:my_memo/ui/write/WriteScreen.dart';
+import 'package:my_memo/util/colors.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: const Color(0xFFFAFAFA),
-        body: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// 타이틀
-              mainTitle(),
-              const SizedBox(height: 10),
+    return SafeArea(
+      child: Scaffold(
+          backgroundColor: const Color(0xFFFAFAFA),
+          body: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                /// 타이틀
+                mainTitle(),
+                const SizedBox(height: 10),
 
-              /// 조건 영역 : 검색 + 검색 조건
-              conditionArea(),
-              const SizedBox(
-                height: 10,
-              ),
+                /// 조건 영역 : 검색 + 검색 조건
+                conditionArea(),
+                const SizedBox(
+                  height: 10,
+                ),
 
-              /// 메모 리스트 아이템
-              memoListItem(
-                  mainColor: const Color(0xFFF37878),
-                  subColor: const Color(0xFFFFBEBE),
-                  title: "제목입니다.",
-                  date: "2022/09/19"),
-              const SizedBox(
-                height: 10,
-              ),
-              memoListItem(
-                  mainColor: const Color(0xFFF8BB54),
-                  subColor: const Color(0xFFFAD9A1),
-                  title: "아주 긴 제목을 입력해보겠습니다. 어떻게 표시되는지 확인해봅시다",
-                  date: "2022/09/19"),
-            ],
+                /// 메모 리스트 아이템
+                Expanded(
+                  child: FutureBuilder(
+                    future: getMemoList(),
+                    builder: (context, AsyncSnapshot<List<MemoItem>> snapshot) {
+                      if (!snapshot.hasData || snapshot.data == null) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      var list = snapshot.data ?? [];
+
+                      return ListView.builder(
+                          itemCount: list.length,
+                          itemBuilder: (context, index) {
+                            var item = list[index];
+                            return Column(
+                              children: [
+                                memoListItem(
+                                    memoItem: item),
+                                const SizedBox(height: 10,)
+                              ],
+                            );
+                          });
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        floatingActionButton: customFloat());
+          floatingActionButton: customFloat(context)),
+    );
   }
 }
 
@@ -134,14 +156,13 @@ Widget conditionSelectBox(String text, bool isSelect) {
 
 /// 메모 리스트 아이템
 Widget memoListItem({
-  Color mainColor = const Color(0xFFF37878),
-  Color subColor = const Color(0xFFFFBEBE),
-  String title = "",
-  String date = "",
+  required MemoItem memoItem
 }) {
+  DateTime date = DateTime.fromMillisecondsSinceEpoch(memoItem.timestamp);
+
   return Container(
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10), color: subColor),
+          borderRadius: BorderRadius.circular(10), color: MemoColor.getByGroup(memoItem.colorGroup).subColor),
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -152,7 +173,7 @@ Widget memoListItem({
                   borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(10),
                       bottomLeft: Radius.circular(10)),
-                  color: mainColor),
+                  color: MemoColor.getByGroup(memoItem.colorGroup).mainColor),
             ),
             Expanded(
                 child: Padding(
@@ -162,7 +183,7 @@ Widget memoListItem({
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    memoItem.title,
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 16),
                     maxLines: 1,
@@ -176,7 +197,7 @@ Widget memoListItem({
                     children: [
                       Expanded(
                           child: Text(
-                        date,
+                        "${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}",
                         style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
@@ -204,9 +225,14 @@ Widget memoListItem({
 }
 
 /// Float 아이템
-Widget customFloat() {
+Widget customFloat(context) {
   return InkWell(
-    onTap: () {},
+    onTap: () {
+      Navigator.push(context,
+          MaterialPageRoute(builder: (BuildContext context) {
+        return const WriteScreen();
+      }));
+    },
     borderRadius: const BorderRadius.all(Radius.circular(10)),
     child: Container(
       width: 45,
