@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:my_memo/database/MemoItem.dart';
+import 'package:my_memo/database/MemoProvider.dart';
+import 'package:my_memo/ui/home/ConditionSelect.dart';
 import 'package:my_memo/ui/write/WriteScreen.dart';
 import 'package:my_memo/util/colors.dart';
 
@@ -12,6 +14,23 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  var searchState = MemoListSearch.searchDefault;
+  var searchText = "";
+  List<MemoItem> list = [];
+
+  searchMemoList() async {
+    list = await MemoProvider().getMemoList(searchState, searchText);
+    setState(() {
+      list;
+    });
+  }
+
+  @override
+  initState() {
+    super.initState();
+    searchMemoList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -27,37 +46,40 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 10),
 
                 /// 조건 영역 : 검색 + 검색 조건
-                conditionArea(),
+                ConditionSelect(onChanged: (value) {
+                  setState(() {
+                    searchText = value;
+                    searchMemoList();
+                  });
+                }, onSelected: (value) {
+                  print("value : $value");
+                  setState(() {
+                    searchState = value;
+                    searchMemoList();
+                  });
+                }),
                 const SizedBox(
                   height: 10,
                 ),
 
                 /// 메모 리스트 아이템
                 Expanded(
-                  child: FutureBuilder(
-                    future: getMemoList(),
-                    builder: (context, AsyncSnapshot<List<MemoItem>> snapshot) {
-                      if (!snapshot.hasData || snapshot.data == null) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      var list = snapshot.data ?? [];
-
-                      return ListView.builder(
-                          itemCount: list.length,
-                          itemBuilder: (context, index) {
-                            var item = list[index];
-                            return Column(
-                              children: [
-                                memoListItem(
-                                    memoItem: item),
-                                const SizedBox(height: 10,)
-                              ],
-                            );
-                          });
-                    },
-                  ),
-                ),
+                  child: (() {
+                    if (list.isEmpty) {
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Center(
+                              child: Text(
+                            "작성된 메모가 없어요.",
+                          ))
+                        ],
+                      );
+                    } else {
+                      return memoListWidget(onChange: () {}, list: list);
+                    }
+                  })(),
+                )
               ],
             ),
           ),
@@ -75,94 +97,32 @@ Widget mainTitle() {
   );
 }
 
-/// 조건 영역
-Widget conditionArea() {
-  return Column(
-    children: [
-      /// 검색 창
-      searchField(),
-      const SizedBox(
-        height: 10,
-      ),
-
-      /// 검색 조건 선택
-      Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          conditionSelectBox("기본순", true),
-          const SizedBox(
-            width: 5,
-          ),
-          conditionSelectBox("날짜순", false),
-          const SizedBox(
-            width: 5,
-          ),
-          conditionSelectBox("중요글만", false),
-          const SizedBox(
-            width: 5,
-          ),
-          conditionSelectBox("비밀글만", false)
-        ],
-      ),
-    ],
-  );
-}
-
-/// 검색 창
-Widget searchField() {
-  return TextFormField(
-    decoration: const InputDecoration(
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(10)),
-      ),
-      focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
-          borderSide: BorderSide(color: Color(0xFFF37878))),
-      filled: true,
-      fillColor: Color(0xFFCFCFCF),
-      contentPadding: EdgeInsets.fromLTRB(12, 0, 12, 0),
-      hintText: "검색어를 입력해주세요",
-    ),
-  );
-}
-
-/// 조건 선택 아이템
-Widget conditionSelectBox(String text, bool isSelect) {
-  var textColor = const Color(0xFF17181D);
-  if (isSelect) {
-    textColor = const Color(0xFFFAFAFA);
-  }
-  var backgroundColor = const Color(0xFFCFCFCF);
-  if (isSelect) {
-    backgroundColor = const Color(0xFFF37878);
-  }
-
-  return Container(
-    decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20), color: backgroundColor),
-    child: Row(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-          child: Text(
-            text,
-            style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
-          ),
-        )
-      ],
-    ),
-  );
+Widget memoListWidget(
+    {required VoidCallback onChange, required List<MemoItem> list}) {
+  return ListView.builder(
+      itemCount: list.length,
+      itemBuilder: (context, index) {
+        var item = list[index];
+        return Column(
+          children: [
+            memoListItem(memoItem: item, onChange: onChange),
+            const SizedBox(
+              height: 10,
+            )
+          ],
+        );
+      });
 }
 
 /// 메모 리스트 아이템
-Widget memoListItem({
-  required MemoItem memoItem
-}) {
+Widget memoListItem(
+    {required MemoItem memoItem, required VoidCallback onChange}) {
   DateTime date = DateTime.fromMillisecondsSinceEpoch(memoItem.timestamp);
 
   return Container(
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10), color: MemoColor.getByGroup(memoItem.colorGroup).subColor),
+          borderRadius: BorderRadius.circular(10),
+          color: MemoColor.getByGroup(memoItem.colorGroup).subColor),
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -211,8 +171,14 @@ Widget memoListItem({
                         width: 5,
                       ),
                       GestureDetector(
-                        onTap: () {},
-                        child: SvgPicture.asset("assets/images/ic_star.svg"),
+                        onTap: () {
+                          MemoProvider().updateImportance(
+                              id: memoItem.id, value: !memoItem.isImportance);
+                          onChange();
+                        },
+                        child: SvgPicture.asset(memoItem.isImportance
+                            ? "assets/images/ic_star_fill.svg"
+                            : "assets/images/ic_star.svg"),
                       ),
                     ],
                   )

@@ -23,7 +23,6 @@ class MemoItem {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'title': title,
       'contents': contents,
       'isSecret': isSecret,
@@ -67,6 +66,21 @@ class MemoItemModify {
         colorGroup: colorGroup);
   }
 }
+
+//    @Insert(onConflict = OnConflictStrategy.REPLACE)
+//     suspend fun insertMemoItem(memoEntity: MemoEntity): Long
+// 
+//     @Query("SELECT * FROM MemoEntity WHERE `title` LIKE :search")
+//     fun selectAllMemo(search : String): Flow<List<MemoEntity>>
+// 
+//     @Query("SELECT * FROM MemoEntity WHERE `index` = :index")
+//     fun selectMemoIndex(index: Long): Flow<MemoEntity>
+// 
+//     @Query("DELETE FROM MemoEntity WHERE `index` = :index")
+//     suspend fun deleteMemoIndex(index: Long)
+// 
+//     @Query("UPDATE  MemoEntity SET `isImportance` = :isImportance WHERE `index` = :index")
+//     suspend fun updateImportance(index: Long, isImportance: Boolean): Int
 
 Future<List<MemoItem>> getMemoList() async {
   final db = await MemoProvider().database;
