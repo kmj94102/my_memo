@@ -42,8 +42,8 @@ class _SecretMemoListItemState extends State<SecretMemoListItem> {
                           child: TextFormField(
                             obscureText: true,
                             controller: controller,
-                            decoration:
-                                const InputDecoration(hintText: "비밀번호를 입력해주세요", isDense: true),
+                            decoration: const InputDecoration(
+                                hintText: "비밀번호를 입력해주세요", isDense: true),
                             validator: (value) {
                               if (value != widget.memoItem.password) {
                                 return "비밀번호를 확인해주세요";

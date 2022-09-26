@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:my_memo/database/MemoItem.dart';
 import 'package:my_memo/database/MemoProvider.dart';
 import 'package:my_memo/ui/detail/DetailScreen.dart';

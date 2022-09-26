@@ -4,6 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:my_memo/database/MemoItem.dart';
 import 'package:my_memo/database/MemoProvider.dart';
 import 'package:my_memo/ui/common/MyTitle.dart';
+import 'package:my_memo/ui/write/WriteScreen.dart';
+import 'package:my_memo/util/colors.dart';
 
 class DetailScreen extends StatefulWidget {
   const DetailScreen({Key? key, required this.id}) : super(key: key);
@@ -14,7 +16,7 @@ class DetailScreen extends StatefulWidget {
 }
 
 class _DetailScreenState extends State<DetailScreen> {
-  MemoItem? memoItem;
+  MemoItem memoItem = MemoItem();
 
   @override
   void initState() {
@@ -23,7 +25,7 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   getMemoItem() async {
-    memoItem = await MemoProvider().getMemoItem(id: widget.id);
+    memoItem = await MemoProvider().getMemoItem(id: widget.id) ?? MemoItem();
     setState(() {
       memoItem;
     });
@@ -40,14 +42,12 @@ class _DetailScreenState extends State<DetailScreen> {
             children: [
               /// 헤더 : 상단 타이틀 영역
               MyTitle(
-                isImportance: memoItem?.isImportance ?? false,
+                isImportance: memoItem.isImportance,
                 isDetail: true,
                 onImportanceClick: () {
-                  if (memoItem?.id != null || memoItem?.isImportance != null) {
-                    MemoProvider().updateImportance(
-                        id: memoItem!.id, value: !memoItem!.isImportance);
-                    getMemoItem();
-                  }
+                  MemoProvider().updateImportance(
+                      id: memoItem.id, value: !memoItem.isImportance);
+                  getMemoItem();
                 },
               ),
               const SizedBox(
@@ -55,9 +55,7 @@ class _DetailScreenState extends State<DetailScreen> {
               ),
 
               /// 바디 : 메모 제목 + 내용
-              Expanded(
-                  child: detailBody(
-                      memoItem?.title ?? "", memoItem?.contents ?? "")),
+              Expanded(child: detailBody(memoItem)),
 
               /// 풋터 : 수정/삭제 버튼
               detailFooter(),
@@ -80,12 +78,12 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   /// 바디 : 메모 제목 + 내용
-  Widget detailBody(String title, String content) {
+  Widget detailBody(MemoItem memoItem) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
+          memoItem.title,
           style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -107,10 +105,12 @@ class _DetailScreenState extends State<DetailScreen> {
               const BoxConstraints(minHeight: 300, minWidth: double.infinity),
           decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              color: const Color(0xFFFFBEBE),
-              border: Border.all(width: 1, color: const Color(0xFFF37878))),
+              color: MemoColor.getByGroup(memoItem.colorGroup).subColor,
+              border: Border.all(
+                  width: 1,
+                  color: MemoColor.getByGroup(memoItem.colorGroup).mainColor)),
           child: Text(
-            content,
+            memoItem.contents,
             style: const TextStyle(fontSize: 14),
           ),
         )
@@ -124,7 +124,14 @@ class _DetailScreenState extends State<DetailScreen> {
       children: [
         Expanded(
             child: OutlinedButton(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (BuildContext context) {
+              return WriteScreen(
+                id: widget.id,
+              );
+            }));
+          },
           style: OutlinedButton.styleFrom(
               side: const BorderSide(color: Color(0xFF191A1E)),
               backgroundColor: const Color(0xFFFAD9A1),

@@ -1,11 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:my_memo/database/MemoItem.dart';
+import 'package:my_memo/database/MemoProvider.dart';
 import 'package:my_memo/ui/common/MyTitle.dart';
-import '../detail/WriteBody.dart';
+import 'WriteBody.dart';
 
 class WriteScreen extends StatefulWidget {
-  const WriteScreen({Key? key}) : super(key: key);
+  const WriteScreen({Key? key, this.id = -1}) : super(key: key);
+  final int id;
 
   @override
   State<WriteScreen> createState() => _WriteScreenState();
@@ -13,19 +15,23 @@ class WriteScreen extends StatefulWidget {
 
 class _WriteScreenState extends State<WriteScreen> {
   var memoItem = MemoItemModify();
-  final controller = TextEditingController();
-  int count = 0;
+
+  getMemoItem() async {
+    if(widget.id == -1) return;
+    var item = await MemoProvider().getMemoItem(id: widget.id);
+
+    if(item != null) {
+      memoItem = item.mapper();
+      setState((){
+        memoItem;
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    controller.addListener(() {});
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
+    getMemoItem();
   }
 
   @override
@@ -53,52 +59,19 @@ class _WriteScreenState extends State<WriteScreen> {
             /// 풋터 : 작성 완료
             writeFooter(onPressed: () {
               memoItem.timestamp = DateTime.now().millisecondsSinceEpoch;
-              insert(memoItem.mapper())
-                  .then((value) => {Navigator.of(context).pop()});
+              if(widget.id == -1) {
+                MemoProvider().insert(memoItem.mapper())
+                    .then((value) => {Navigator.of(context).pop()});
+              } else {
+                MemoProvider().updateMemo(id: widget.id, memoItem: memoItem.mapper())
+                    .then((value) => {Navigator.of(context).pop()});
+              }
             })
           ],
         ),
       ),
     ));
   }
-}
-
-/// 커스텀 텍스트 필드
-Widget customTextField(
-    {Color mainColor = const Color(0xFFF37878),
-    Color subColor = const Color(0xFFFFBEBE),
-    bool isContents = false,
-    bool isSecret = false,
-    String hint = "",
-    ValueChanged? onChange,
-    TextEditingController? controller}) {
-  double minHeight = 0;
-  int? maxLines = 1;
-  if (isContents) {
-    minHeight = 230;
-    maxLines = null;
-  }
-
-  return Container(
-    constraints: BoxConstraints(minHeight: minHeight),
-    decoration: BoxDecoration(
-        border: Border.all(color: mainColor, width: 1),
-        borderRadius: BorderRadius.circular(10),
-        color: subColor),
-    child: TextField(
-      decoration: InputDecoration(
-          isDense: true,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          border: InputBorder.none,
-          hintText: hint),
-      cursorColor: mainColor,
-      maxLines: maxLines,
-      onChanged: onChange,
-      controller: controller,
-      obscureText: isSecret,
-    ),
-  );
 }
 
 /// 메모 색상 선택

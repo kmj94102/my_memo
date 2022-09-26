@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../../database/MemoItem.dart';
 import '../../util/colors.dart';
-import '../write/WriteScreen.dart';
+import '../common/CustomTextField.dart';
+import 'WriteScreen.dart';
 
 /// 바디 : 제목, 내용, 색상, 비밀 메모 설정
 class WriteBody extends StatefulWidget {
@@ -21,10 +22,14 @@ class _WriteBodyState extends State<WriteBody> {
 
   @override
   Widget build(BuildContext context) {
+    print("memoItem : ${widget.memoItem.title}");
+    _color = MemoColor.getByGroup(widget.memoItem.colorGroup);
+    _isSecret = widget.memoItem.isSecret;
     return Column(
       children: [
         /// 타이틀
-        customTextField(
+        CustomTextField(
+            initValue: widget.memoItem.title,
             hint: "타이틀을 입력해주세요",
             mainColor: _color.mainColor,
             subColor: _color.subColor,
@@ -47,7 +52,8 @@ class _WriteBodyState extends State<WriteBody> {
         const SizedBox(
           height: 7,
         ),
-        customTextField(
+        CustomTextField(
+          initValue: widget.memoItem.contents,
           hint: "내용을 입력해주세요",
           mainColor: _color.mainColor,
           subColor: _color.subColor,
@@ -109,7 +115,10 @@ class _WriteBodyState extends State<WriteBody> {
           ],
         ),
 
-        const SizedBox(height: 15,),
+        const SizedBox(
+          height: 15,
+        ),
+
         /// 비밀 메모 설정
         GestureDetector(
           child: Row(
@@ -127,28 +136,32 @@ class _WriteBodyState extends State<WriteBody> {
                       });
                     }),
               ),
-              const SizedBox(width: 6,),
+              const SizedBox(
+                width: 6,
+              ),
               const Text("비밀 메모 설정"),
             ],
           ),
-          onTap: (){
+          onTap: () {
             setState(() {
               _isSecret = !_isSecret;
               widget.memoItem.isSecret = _isSecret;
             });
           },
         ),
-        const SizedBox(height: 10,),
-        if(_isSecret)
-          customTextField(
-            mainColor: _color.mainColor,
-            subColor: _color.subColor,
-            isSecret: true,
-            hint: "비밀번호를 입력해주세요",
-            onChange: (value){
-              widget.memoItem.password = value;
-            }
-          )
+        const SizedBox(
+          height: 10,
+        ),
+        if (_isSecret)
+          CustomTextField(
+              initValue: widget.memoItem.password,
+              mainColor: _color.mainColor,
+              subColor: _color.subColor,
+              isSecret: true,
+              hint: "비밀번호를 입력해주세요",
+              onChange: (value) {
+                widget.memoItem.password = value;
+              })
       ],
     );
   }
