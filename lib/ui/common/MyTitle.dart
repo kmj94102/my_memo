@@ -6,12 +6,14 @@ class MyTitle extends StatelessWidget {
       {Key? key,
       this.onBackClick,
       this.onImportanceClick,
+      this.isImportance = false,
       this.isDetail = false})
       : super(key: key);
 
   final VoidCallback? onBackClick;
   final VoidCallback? onImportanceClick;
   final bool isDetail;
+  final bool isImportance;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,9 @@ class MyTitle extends StatelessWidget {
         if (isDetail)
           GestureDetector(
             onTap: onImportanceClick,
-            child: SvgPicture.asset("assets/images/ic_star.svg"),
+            child: SvgPicture.asset(isImportance
+                ? "assets/images/ic_star_fill.svg"
+                : "assets/images/ic_star.svg"),
           ),
       ],
     );

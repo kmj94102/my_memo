@@ -5,7 +5,7 @@ import 'MemoItem.dart';
 
 class MemoProvider {
   late Database _database;
-  static const String dbName = "Memo";
+  static const String memoTableName = "Memo";
 
   Future<Database?> get database async {
     _database = await initDB();
@@ -37,7 +37,7 @@ class MemoProvider {
 
   Future<void> insert(MemoItem item) async {
     final db = await database;
-    await db!.insert(dbName, item.toMap(),
+    await db!.insert(memoTableName, item.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -54,7 +54,7 @@ class MemoProvider {
         break;
     }
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db!.query(dbName,
+    final List<Map<String, dynamic>> maps = await db!.query(memoTableName,
         where: where,
         whereArgs: ['%$keyword%'],
       orderBy: condition == MemoListSearch.searchDate ? "timestamp DESC" : "id"
@@ -77,11 +77,39 @@ class MemoProvider {
     return list;
   }
 
-  Future<void> updateImportance({required int id, required bool value}) async {
-    print("update: $id / $value");
+  Future<MemoItem?> getMemoItem({required int id}) async {
     final db = await database;
-    var test = await db!.update(dbName, {'isImportance': value ? 1 : 0,}, where: "id = ?", whereArgs: [id]);
-    print("$test");
+    List<Map<String, dynamic>> result = await db!.query(memoTableName, where: "id = ?", whereArgs: [id]);
+
+    if(result.isEmpty) {
+      return null;
+    } else {
+      var item = result.first;
+      return MemoItem(
+        id: item["id"],
+        title: item["title"],
+        contents: item["contents"],
+        isSecret: item["isSecret"] == 1,
+        isImportance: item["isImportance"] == 1,
+        password: item["password"],
+        timestamp: item["timestamp"],
+        colorGroup: item["colorGroup"],
+      );
+    }
+  }
+
+  Future<void> updateImportance({required int id, required bool value}) async {
+    final db = await database;
+    var result = await db!.update(memoTableName, {'isImportance': value ? 1 : 0,}, where: "id = ?", whereArgs: [id]);
+    print("$result");
+  }
+
+  Future<int> deleteMemo({required int id}) async {
+    final db = await database;
+
+    var result = await db!.delete(memoTableName, where: "id = ?", whereArgs: [id]);
+
+    return result;
   }
 
 }

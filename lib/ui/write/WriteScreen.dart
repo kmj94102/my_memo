@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:my_memo/database/MemoItem.dart';
-import 'package:my_memo/ui/common/Title.dart';
+import 'package:my_memo/ui/common/MyTitle.dart';
 import '../detail/WriteBody.dart';
 
 class WriteScreen extends StatefulWidget {
@@ -42,14 +42,19 @@ class _WriteScreenState extends State<WriteScreen> {
             const SizedBox(
               height: 20,
             ),
+
             /// 바디 : 제목, 내용, 색상, 비밀 메모 설정
             Expanded(
                 child: SingleChildScrollView(
-                    child: WriteBody(memoItem: memoItem,))),
+                    child: WriteBody(
+              memoItem: memoItem,
+            ))),
+
             /// 풋터 : 작성 완료
             writeFooter(onPressed: () {
-              insert(memoItem.mapper());
-              Navigator.of(context).pop();
+              memoItem.timestamp = DateTime.now().millisecondsSinceEpoch;
+              insert(memoItem.mapper())
+                  .then((value) => {Navigator.of(context).pop()});
             })
           ],
         ),
