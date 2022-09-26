@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:my_memo/database/MemoItem.dart';
 import 'package:my_memo/database/MemoProvider.dart';
 import 'package:my_memo/ui/detail/DetailScreen.dart';
 import 'package:my_memo/ui/home/ConditionSelect.dart';
 import 'package:my_memo/ui/write/WriteScreen.dart';
 import 'package:my_memo/util/colors.dart';
+
+import 'SecretMemoListItem.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -124,7 +127,14 @@ Widget memoListWidget(
         var item = list[index];
         return Column(
           children: [
-            memoListItem(memoItem: item, onChange: onChange, onTap: onTap, context: context),
+            item.isSecret
+                ? SecretMemoListItem(
+                    memoItem: item, context: context, onTap: onTap)
+                : memoListItem(
+                    memoItem: item,
+                    onChange: onChange,
+                    onTap: onTap,
+                    context: context),
             const SizedBox(
               height: 10,
             )
